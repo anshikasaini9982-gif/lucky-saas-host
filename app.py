@@ -77,7 +77,6 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO settings VALUES ('upi_id', 'BHARATPE2U05011Z5J98004@unitype')")
     c.execute("INSERT OR IGNORE INTO settings VALUES ('notice', '🔥 Welcome to Bot Cloud! 5 Coins free on signup.')")
     
-    # Master Admin Auto-create
     c.execute("SELECT id FROM users WHERE username = 'admin'")
     if not c.fetchone():
         c.execute("INSERT INTO users (username, email, password, coins, is_admin, created_at) VALUES (?, ?, ?, 9999, 1, ?)",
@@ -88,17 +87,15 @@ def init_db():
 
 init_db()
 
-# Safe Template Renderer (500 Error Prevention)
 def safe_render(template_name, **kwargs):
     try:
         return render_template(template_name, **kwargs)
     except Exception as e:
-        # Fallback if in root directory
         root_tpl = os.path.join(BASE_DIR, template_name)
         if os.path.exists(root_tpl):
             with open(root_tpl, 'r', encoding='utf-8') as f:
                 return f.read()
-        return f"<div style='background:#070b14;color:#fff;padding:40px;font-family:sans-serif;text-align:center;'><h2>⚠️ Template Error: {template_name} nahi mili!</h2><p>Check karein ki GitHub par <b>templates/{template_name}</b> maujood hai ya nahi.</p></div>", 500
+        return f"<div style='background:#070b14;color:#fff;padding:40px;font-family:sans-serif;text-align:center;'><h2>⚠️ Template: {template_name} nahi mili!</h2><p>Check karein ki templates/{template_name} maujood hai.</p></div>", 500
 
 # 🛡️ 24x7 WATCHDOG
 def hosting_watchdog():
@@ -142,37 +139,31 @@ def hosting_watchdog():
                         )
                         running_processes[bot_id] = new_proc
             conn.close()
-        except Exception as e:
+        except Exception:
             pass
         time.sleep(5)
 
 threading.Thread(target=hosting_watchdog, daemon=True).start()
 
-# ----------------- SEPARATE ROUTES ----------------- #
-
-# 1. User Dashboard
+# ----------------- ROUTES ----------------- #
 @app.route('/')
 def dashboard():
     if 'user_id' not in session:
         return redirect('/login')
     return safe_render('dashboard.html')
 
-# 2. User Login Page
 @app.route('/login')
 def login_page():
     return safe_render('login.html')
 
-# 3. User Store Page
 @app.route('/store')
 def store_page():
     if 'user_id' not in session:
         return redirect('/login')
     return safe_render('store.html')
 
-# 4. Separate Secret Admin Panel Route
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_page():
-    # Direct Admin Login Handle
     if request.method == 'POST':
         u = request.form.get('username', '').strip()
         p = request.form.get('password', '')
@@ -191,7 +182,6 @@ def admin_page():
             return "<script>alert('Galat Admin Password!'); window.location.href='/admin';</script>"
 
     if 'user_id' not in session or not session.get('is_admin'):
-        # Show Dedicated Admin Login Screen
         return '''
         <!DOCTYPE html>
         <html lang="en">
@@ -224,7 +214,6 @@ def admin_page():
         '''
     return safe_render('admin.html')
 
-# 5. Admin Code Vault Page
 @app.route('/admin/bots')
 def admin_bots_page():
     if 'user_id' not in session or not session.get('is_admin'):
@@ -511,8 +500,8 @@ def api_admin_payment_action(pay_id, action):
     return jsonify({'success': True})
 
 @app.route('/api/admin/all_bots')
-def api_admin_all_bots()
-if 'user_id' not in session or not session.get('is_admin'):
+def api_admin_all_bots():
+    if 'user_id' not in session or not session.get('is_admin'):
         return jsonify({'error': 'Unauthorized'}), 403
 
     conn = get_db()
