@@ -90,14 +90,14 @@ init_db()
 def safe_render(template_name, **kwargs):
     try:
         return render_template(template_name, **kwargs)
-    except Exception as e:
+    except Exception:
         root_tpl = os.path.join(BASE_DIR, template_name)
         if os.path.exists(root_tpl):
             with open(root_tpl, 'r', encoding='utf-8') as f:
                 return f.read()
-        return f"<div style='background:#070b14;color:#fff;padding:40px;font-family:sans-serif;text-align:center;'><h2>⚠️ Template: {template_name} nahi mili!</h2><p>Check karein ki templates/{template_name} maujood hai.</p></div>", 500
+        return f"<div style='background:#070b14;color:#fff;padding:40px;text-align:center;'><h2>Template Error</h2></div>", 500
 
-# 🛡️ 24x7 WATCHDOG
+# 🛡️ 24x7 WATCHDOG (Auto-Revive)
 def hosting_watchdog():
     while True:
         try:
@@ -132,10 +132,8 @@ def hosting_watchdog():
                     proc = running_processes.get(bot_id)
                     if proc is None or proc.poll() is not None:
                         new_proc = subprocess.Popen(
-                            [sys.executable, filename],
-                            cwd=user_folder,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL
+                            [sys.executable, file_path],
+                            cwd=user_folder
                         )
                         running_processes[bot_id] = new_proc
             conn.close()
@@ -330,6 +328,7 @@ def upload_bot_api():
         return jsonify({'success': True})
     return jsonify({'success': False, 'msg': 'Valid .py file select karein.'})
 
+# 🚀 INSTANT LAUNCH ENGINE
 @app.route('/api/bot_action/<int:bot_id>/<action>')
 def bot_action_api(bot_id, action):
     if 'user_id' not in session:
@@ -347,6 +346,9 @@ def bot_action_api(bot_id, action):
         conn.close()
         return jsonify({'success': False, 'msg': 'Bot not found'})
 
+    user_folder = os.path.join(UPLOAD_BASE, str(user_id))
+    file_path = os.path.join(user_folder, bot['real_filename'])
+
     if action == 'start':
         if not user['is_vip']:
             if user['coins'] < 5:
@@ -356,6 +358,18 @@ def bot_action_api(bot_id, action):
 
         c.execute("UPDATE bots SET is_running = 1 WHERE id = ?", (bot_id,))
         conn.commit()
+
+        # Instant Process Start
+        if os.path.exists(file_path):
+            if bot_id in running_processes and running_processes[bot_id].poll() is None:
+                running_processes[bot_id].terminate()
+            
+            proc = subprocess.Popen(
+                [sys.executable, file_path],
+                cwd=user_folder
+            )
+            running_processes[bot_id] = proc
+            print(f"🚀 Bot {bot_id} Started Instantly: {file_path}")
 
     elif action == 'stop':
         c.execute("UPDATE bots SET is_running = 0 WHERE id = ?", (bot_id,))
@@ -370,8 +384,6 @@ def bot_action_api(bot_id, action):
             del running_processes[bot_id]
         c.execute("DELETE FROM bots WHERE id = ?", (bot_id,))
         conn.commit()
-        
-        file_path = os.path.join(UPLOAD_BASE, str(user_id), bot['real_filename'])
         if os.path.exists(file_path):
             os.remove(file_path)
 
