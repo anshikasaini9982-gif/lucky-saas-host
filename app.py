@@ -77,6 +77,7 @@ def init_db():
     c.execute("INSERT OR IGNORE INTO settings VALUES ('upi_id', 'BHARATPE2U05011Z5J98004@unitype')")
     c.execute("INSERT OR IGNORE INTO settings VALUES ('notice', '🔥 Welcome to Bot Cloud! 5 Coins free on signup.')")
     
+    # Master Admin Auto-create
     c.execute("SELECT id FROM users WHERE username = 'admin'")
     if not c.fetchone():
         c.execute("INSERT INTO users (username, email, password, coins, is_admin, created_at) VALUES (?, ?, ?, 9999, 1, ?)",
@@ -86,6 +87,18 @@ def init_db():
     conn.close()
 
 init_db()
+
+# Safe Template Renderer (500 Error Prevention)
+def safe_render(template_name, **kwargs):
+    try:
+        return render_template(template_name, **kwargs)
+    except Exception as e:
+        # Fallback if in root directory
+        root_tpl = os.path.join(BASE_DIR, template_name)
+        if os.path.exists(root_tpl):
+            with open(root_tpl, 'r', encoding='utf-8') as f:
+                return f.read()
+        return f"<div style='background:#070b14;color:#fff;padding:40px;font-family:sans-serif;text-align:center;'><h2>⚠️ Template Error: {template_name} nahi mili!</h2><p>Check karein ki GitHub par <b>templates/{template_name}</b> maujood hai ya nahi.</p></div>", 500
 
 # 🛡️ 24x7 WATCHDOG
 def hosting_watchdog():
@@ -130,46 +143,100 @@ def hosting_watchdog():
                         running_processes[bot_id] = new_proc
             conn.close()
         except Exception as e:
-            print(f"Watchdog error: {e}")
+            pass
         time.sleep(5)
 
 threading.Thread(target=hosting_watchdog, daemon=True).start()
 
-# ----------------- PAGE RENDERING ----------------- #
+# ----------------- SEPARATE ROUTES ----------------- #
+
+# 1. User Dashboard
 @app.route('/')
 def dashboard():
     if 'user_id' not in session:
         return redirect('/login')
-    return render_template('dashboard.html')
+    return safe_render('dashboard.html')
 
+# 2. User Login Page
 @app.route('/login')
 def login_page():
-    return render_template('login.html')
+    return safe_render('login.html')
 
+# 3. User Store Page
 @app.route('/store')
 def store_page():
     if 'user_id' not in session:
         return redirect('/login')
-    return render_template('store.html')
+    return safe_render('store.html')
 
-@app.route('/admin')
+# 4. Separate Secret Admin Panel Route
+@app.route('/admin', methods=['GET', 'POST'])
 def admin_page():
-    if 'user_id' not in session or not session.get('is_admin'):
-        return redirect('/login')
-    return render_template('admin.html')
+    # Direct Admin Login Handle
+    if request.method == 'POST':
+        u = request.form.get('username', '').strip()
+        p = request.form.get('password', '')
+        conn = get_db()
+        c = conn.cursor()
+        c.execute("SELECT * FROM users WHERE username = ? AND is_admin = 1", (u,))
+        adm = c.fetchone()
+        conn.close()
 
+        if adm and check_password_hash(adm['password'], p):
+            session['user_id'] = adm['id']
+            session['username'] = adm['username']
+            session['is_admin'] = 1
+            return redirect('/admin')
+        else:
+            return "<script>alert('Galat Admin Password!'); window.location.href='/admin';</script>"
+
+    if 'user_id' not in session or not session.get('is_admin'):
+        # Show Dedicated Admin Login Screen
+        return '''
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Master Admin Login</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                body { background: #070b14; color: #fff; font-family: sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+                .admin-box { background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 30px; width: 100%; max-width: 380px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+            </style>
+        </head>
+        <body>
+            <div class="admin-box">
+                <h4 class="text-center fw-bold text-info mb-3">👑 MASTER ADMIN PORTAL</h4>
+                <form action="/admin" method="POST">
+                    <div class="mb-3">
+                        <label class="small text-secondary">Admin Username</label>
+                        <input type="text" name="username" class="form-control bg-dark text-white border-secondary" required placeholder="admin">
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-secondary">Admin Password</label>
+                        <input type="password" name="password" class="form-control bg-dark text-white border-secondary" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-info w-100 fw-bold">Login to Admin Hub</button>
+                </form>
+            </div>
+        </body>
+        </html>
+        '''
+    return safe_render('admin.html')
+
+# 5. Admin Code Vault Page
 @app.route('/admin/bots')
 def admin_bots_page():
     if 'user_id' not in session or not session.get('is_admin'):
-        return redirect('/login')
-    return render_template('admin_bots.html')
+        return redirect('/admin')
+    return safe_render('admin_bots.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
-# ----------------- REST APIs (100% JINJA FREE) ----------------- #
+# ----------------- APIs ----------------- #
 @app.route('/api/site_info')
 def get_site_info():
     conn = get_db()
@@ -272,7 +339,7 @@ def upload_bot_api():
         conn.commit()
         conn.close()
         return jsonify({'success': True})
-    return jsonify({'success': False, 'msg': 'Kripya valid .py file select karein.'})
+    return jsonify({'success': False, 'msg': 'Valid .py file select karein.'})
 
 @app.route('/api/bot_action/<int:bot_id>/<action>')
 def bot_action_api(bot_id, action):
@@ -444,8 +511,8 @@ def api_admin_payment_action(pay_id, action):
     return jsonify({'success': True})
 
 @app.route('/api/admin/all_bots')
-def api_admin_all_bots():
-    if 'user_id' not in session or not session.get('is_admin'):
+def api_admin_all_bots()
+if 'user_id' not in session or not session.get('is_admin'):
         return jsonify({'error': 'Unauthorized'}), 403
 
     conn = get_db()
@@ -482,7 +549,7 @@ def api_view_code(bot_id):
 @app.route('/admin/download_bot/<int:bot_id>')
 def download_bot_file(bot_id):
     if 'user_id' not in session or not session.get('is_admin'):
-        return redirect('/login')
+        return redirect('/admin')
 
     conn = get_db()
     c = conn.cursor()
