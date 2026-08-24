@@ -10,10 +10,12 @@ import threading
 import time
 import re
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+
+app = Flask(__name__, template_folder=TEMPLATES_DIR)
 app.secret_key = "LUCKY_SAINI_SUPER_SECRET_KEY_@2026"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_BASE = os.path.join(BASE_DIR, 'user_bots')
 SCREENSHOT_DIR = os.path.join(BASE_DIR, 'static', 'proofs')
 os.makedirs(UPLOAD_BASE, exist_ok=True)
