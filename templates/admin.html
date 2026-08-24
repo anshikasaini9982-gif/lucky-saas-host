@@ -26,6 +26,7 @@
 <body class="py-4">
 
 <div class="container-fluid" style="max-width: 1200px;">
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h3 class="fw-bold text-info mb-0">👑 MASTER ADMIN HUB</h3>
@@ -38,6 +39,7 @@
         </div>
     </div>
 
+    <!-- 📊 Live Stats -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
             <div class="stat-card">
@@ -65,6 +67,7 @@
         </div>
     </div>
 
+    <!-- 💳 Pending Payments Section -->
     <div class="admin-card mb-4">
         <h5 class="fw-bold text-warning mb-3"><i class="fa-solid fa-receipt me-2"></i>Payment Approvals (Instant Credit)</h5>
         <div class="table-responsive">
@@ -87,6 +90,7 @@
     </div>
 
     <div class="row g-4">
+        <!-- ⚙️ Platform Settings -->
         <div class="col-md-6">
             <div class="admin-card h-100">
                 <h5 class="fw-bold text-info mb-3"><i class="fa-solid fa-sliders me-2"></i>Platform & Branding Settings</h5>
@@ -103,11 +107,12 @@
                         <label class="form-label small text-secondary">Notice Banner (Shows on user dashboard)</label>
                         <input type="text" id="settingNotice" class="form-control bg-dark text-white border-secondary">
                     </div>
-                    <button onclick="saveSettings()" class="btn btn-info w-100 fw-bold">Save System Settings</button>
+                    <button onclick="saveSettings()" class="btn btn-info w-100 fw-bold" id="saveBtn">Save System Settings</button>
                 </div>
             </div>
         </div>
 
+        <!-- 👥 Complete User Ban/Unban & Coin Manager -->
         <div class="col-md-6">
             <div class="admin-card h-100">
                 <h5 class="fw-bold text-light mb-3"><i class="fa-solid fa-users me-2"></i>User Manager (Ban / Unban / Add Coins)</h5>
@@ -132,21 +137,30 @@
 </div>
 
 <script>
+let isSettingsLoaded = false; // Flag to prevent overwriting user typing
+
 async function loadAdminData() {
     try {
         const res = await fetch('/api/admin/data');
         const data = await res.json();
 
+        // Update Stats
         document.getElementById('statUsers').innerText = data.stats.total_users;
         document.getElementById('statBots').innerText = data.stats.active_bots;
         document.getElementById('statPending').innerText = data.stats.pending_orders;
         document.getElementById('statRev').innerText = '₹' + data.stats.total_rev;
 
-        document.getElementById('settingSiteName').value = data.settings.site_name;
-        document.getElementById('adminSiteNameDisplay').innerText = data.settings.site_name + ' • SaaS Management';
-        document.getElementById('settingUpi').value = data.settings.upi_id;
-        document.getElementById('settingNotice').value = data.settings.notice;
+        // Settings (Only set on first load, so typing is NOT disturbed)
+        if (!isSettingsLoaded) {
+            document.getElementById('settingSiteName').value = data.settings.site_name;
+            document.getElementById('settingUpi').value = data.settings.upi_id;
+            document.getElementById('settingNotice').value = data.settings.notice;
+            isSettingsLoaded = true;
+        }
 
+        document.getElementById('adminSiteNameDisplay').innerText = data.settings.site_name + ' • SaaS Management';
+
+        // Payments Table
         const pBody = document.getElementById('paymentTableBody');
         if (data.payments.length === 0) {
             pBody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-secondary">Koi payment request nahi hai.</td></tr>';
@@ -180,6 +194,7 @@ async function loadAdminData() {
             pBody.innerHTML = pHtml;
         }
 
+        // Users Table
         const uBody = document.getElementById('userTableBody');
         if (data.users.length === 0) {
             uBody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-secondary">Koi client register nahi hai.</td></tr>';
@@ -236,16 +251,24 @@ function addCoinsPrompt(userId) {
 }
 
 async function saveSettings() {
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+
     const site = document.getElementById('settingSiteName').value;
     const upi = document.getElementById('settingUpi').value;
     const notice = document.getElementById('settingNotice').value;
+
     await fetch('/api/admin/update_settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ site_name: site, upi_id: upi, notice: notice })
     });
+    
     alert('✅ Branding & System Settings Saved Successfully!');
-    loadAdminData();
+    btn.disabled = false;
+    btn.innerHTML = 'Save System Settings';
+    document.getElementById('adminSiteNameDisplay').innerText = site + ' • SaaS Management';
 }
 
 loadAdminData();
