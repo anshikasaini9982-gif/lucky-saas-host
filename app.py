@@ -97,7 +97,7 @@ def safe_render(template_name, **kwargs):
                 return f.read()
         return f"<div style='background:#070b14;color:#fff;padding:40px;text-align:center;'><h2>Template Error</h2></div>", 500
 
-# 🛡️ 24x7 WATCHDOG (Auto-Revive)
+# 🛡️ 24x7 NON-STOP AUTO-REVIVE WATCHDOG
 def hosting_watchdog():
     while True:
         try:
@@ -130,16 +130,18 @@ def hosting_watchdog():
 
                 if os.path.exists(file_path):
                     proc = running_processes.get(bot_id)
+                    # Agar bot band ho gaya hai, to turant dobara start karo
                     if proc is None or proc.poll() is not None:
                         new_proc = subprocess.Popen(
                             [sys.executable, file_path],
                             cwd=user_folder
                         )
                         running_processes[bot_id] = new_proc
+                        print(f"🔄 [Auto-Revive] Bot {bot_id} Restarted 24x7: {filename}")
             conn.close()
-        except Exception:
-            pass
-        time.sleep(5)
+        except Exception as err:
+            print(f"Watchdog Err: {err}")
+        time.sleep(4)
 
 threading.Thread(target=hosting_watchdog, daemon=True).start()
 
@@ -328,7 +330,7 @@ def upload_bot_api():
         return jsonify({'success': True})
     return jsonify({'success': False, 'msg': 'Valid .py file select karein.'})
 
-# 🚀 INSTANT LAUNCH ENGINE
+# 🚀 24x7 INSTANT LAUNCH ENGINE
 @app.route('/api/bot_action/<int:bot_id>/<action>')
 def bot_action_api(bot_id, action):
     if 'user_id' not in session:
@@ -359,7 +361,6 @@ def bot_action_api(bot_id, action):
         c.execute("UPDATE bots SET is_running = 1 WHERE id = ?", (bot_id,))
         conn.commit()
 
-        # Instant Process Start
         if os.path.exists(file_path):
             if bot_id in running_processes and running_processes[bot_id].poll() is None:
                 running_processes[bot_id].terminate()
@@ -369,7 +370,7 @@ def bot_action_api(bot_id, action):
                 cwd=user_folder
             )
             running_processes[bot_id] = proc
-            print(f"🚀 Bot {bot_id} Started Instantly: {file_path}")
+            print(f"🚀 Bot {bot_id} Started 24x7: {file_path}")
 
     elif action == 'stop':
         c.execute("UPDATE bots SET is_running = 0 WHERE id = ?", (bot_id,))
@@ -377,6 +378,7 @@ def bot_action_api(bot_id, action):
         if bot_id in running_processes:
             running_processes[bot_id].terminate()
             del running_processes[bot_id]
+        print(f"⏸ Bot {bot_id} Stopped manually by user.")
 
     elif action == 'delete':
         if bot_id in running_processes:
@@ -386,6 +388,7 @@ def bot_action_api(bot_id, action):
         conn.commit()
         if os.path.exists(file_path):
             os.remove(file_path)
+        print(f"🗑 Bot {bot_id} Deleted.")
 
     conn.close()
     return jsonify({'success': True})
@@ -505,7 +508,7 @@ def api_admin_payment_action(pay_id, action):
                 c.execute("UPDATE users SET is_vip = 1, vip_expires = ? WHERE id = ?", (exp_date, pay['user_id']))
             else:
                 c.execute("UPDATE users SET coins = coins + ? WHERE id = ?", (pay['coins_reward'], pay['user_id']))
-        else:
+    else:
             c.execute("UPDATE payments SET status = 'rejected' WHERE id = ?", (pay_id,))
         conn.commit()
     conn.close()
