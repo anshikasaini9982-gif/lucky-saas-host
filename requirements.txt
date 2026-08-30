@@ -2,6 +2,12 @@ Flask==3.0.0
 gunicorn==21.2.0
 werkzeug==3.0.1
 pyTelegramBotAPI
-requests
 telethon
 cryptg
+pyrogram
+tgcrypto
+aiogram
+python-telegram-bot
+requests
+aiohttp
+pytz
