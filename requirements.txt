@@ -12,3 +12,4 @@ requests
 aiohttp
 pytz
 yt-dlp
+cloudscraper
