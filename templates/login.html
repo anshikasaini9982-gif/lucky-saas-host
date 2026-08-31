@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Portal — LUKORA</title>
+    <!-- Google Fonts & Bootstrap -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-base: #060913;
+            --bg-surface: #0c1222;
+            --bg-surface-elevated: #111a30;
+            --border: #1e293b;
+            --primary: #00f2fe;
+            --primary-purple: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #8b5cf6 100%);
+            --emerald: #10b981;
+            --gold: #fbbf24;
+            --rose: #f43f5e;
+        }
+
+        body { 
+            background: var(--bg-base); 
+            color: #f1f5f9; 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+
+        /* 💎 3D Spinning Logo Diamond */
+        .spin-diamond {
+            display: inline-block;
+            animation: spin3D 4s linear infinite;
+        }
+        @keyframes spin3D {
+            0% { transform: rotateY(0deg); filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6)); }
+            50% { transform: rotateY(180deg); filter: drop-shadow(0 0 18px rgba(236, 72, 153, 0.8)); }
+            100% { transform: rotateY(360deg); filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6)); }
+        }
+
+        .brand-gradient {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        /* Auth Card */
+        .auth-container-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 30px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7), 0 0 25px rgba(0, 242, 254, 0.08);
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .brand-side-box {
+            background: rgba(12, 18, 34, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Form Inputs */
+        .form-control-auth {
+            background: #111a30;
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 12px;
+            padding: 13px 16px;
+            font-size: 14px;
+        }
+        .form-control-auth:focus {
+            background: #162240;
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+        }
+
+        .input-group-auth {
+            position: relative;
+        }
+        .input-group-auth .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            z-index: 10;
+            padding: 4px 8px;
+        }
+        .input-group-auth .password-toggle-btn:hover {
+            color: #00f2fe;
+        }
+
+        .btn-auth-submit {
+            background: var(--accent-gradient);
+            color: #04101e !important;
+            font-weight: 800;
+            border-radius: 12px;
+            padding: 14px 28px;
+            border: none;
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.35);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn-auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.6);
+        }
+
+        .bonus-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            color: #fef08a;
+            border-radius: 14px;
+            padding: 12px 16px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Password Strength Bar */
+        .strength-meter {
+            height: 4px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .nav-switch-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-switch-btn.active {
+            color: #00f2fe;
+            background: rgba(0, 242, 254, 0.1);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Minimal Header -->
+    <header class="py-3 border-bottom border-secondary border-opacity-25" style="background: rgba(12, 18, 34, 0.85); backdrop-filter: blur(16px);">
+        <div class="container d-flex justify-content-between align-items-center" style="max-width: 1200px;">
+            <a href="/" class="d-flex align-items-center gap-2 text-decoration-none">
+                <span class="spin-diamond fs-4">💎</span>
+                <span class="brand-gradient fs-4">LUKORA</span>
+            </a>
+            <div>
+                <a href="/" class="btn btn-outline-secondary btn-sm rounded-pill px-3 text-light">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Auth Section (2-Column Desktop / 1-Column Mobile) -->
+    <main class="container py-4 my-auto" style="max-width: 1120px;">
+        <div class="row align-items-center justify-content-center g-5">
+            
+            <!-- Left Side Brand Showcase (Desktop only) -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="brand-side-box">
+                    <div>
+                        <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.25);">
+                            <i class="fa-solid fa-cloud text-info small"></i>
+                            <span class="small text-info fw-bold">CLOUD DEVELOPER CONSOLE</span>
+                        </div>
+
+                        <h2 class="display-6 fw-bold text-white mb-3" style="line-height: 1.2;">
+                            Power Your Bots.<br>
+                            <span class="brand-gradient">Always Online.</span>
+                        </h2>
+
+                        <p class="text-secondary small mb-4" style="line-height: 1.6;">
+                            Sign in to deploy, manage, and scale your Telegram bot instances with our automated 24/7 crash-recovery cloud infrastructure.
+                        </p>
+
+                        <!-- Feature Badges -->
+                        <div class="d-flex flex-column gap-3 mb-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="p-2 rounded-3 bg-dark border border-secondary text-info"><i class="fa-solid fa-bolt fs-5"></i></div>
+                                <div>
+                                    <b class="text-white small d-block">Instant 1-Click Launch</b>
+                                    <small class="text-secondary">Deploy Python, Node.js, and PHP bots in seconds.</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="p-2 rounded-3 bg-dark border border-secondary text-success"><i class="fa-solid fa-shield-halved fs-5"></i></div>
+                                <div>
+                                    <b class="text-white small d-block">24/7 Auto-Revive Watchdog</b>
+                                    <small class="text-secondary">Zero downtime with automated 3-second reboot protection.</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="p-2 rounded-3 bg-dark border border-secondary text-warning"><i class="fa-solid fa-gift fs-5"></i></div>
+                                <div>
+                                    <b class="text-white small d-block">5 Free Welcome Coins</b>
+                                    <small class="text-secondary">Start hosting your first Telegram bot completely free.</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trust Footer -->
+                    <div class="pt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center text-secondary small">
+                        <span><i class="fa-solid fa-lock text-success me-1"></i> 256-Bit SSL Encrypted</span>
+                        <span>Proudly Built in India 🇮🇳</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side Auth Card -->
+            <div class="col-lg-6 d-flex justify-content-center">
+                <div class="auth-container-card">
+                    
+                    <!-- Alert Notification Box -->
+                    <div id="authAlert" class="d-none alert py-2 small mb-3"></div>
+
+                    <!-- Tab Switcher (Sign In | Register) -->
+                    <div class="d-flex gap-2 p-1 rounded-3 mb-4" style="background: #090e1a; border: 1px solid var(--border);" id="authNavSwitcher">
+                        <button type="button" class="nav-switch-btn w-50 active" id="btnTabLogin" onclick="switchAuthView('login')">Sign In</button>
+                        <button type="button" class="nav-switch-btn w-50" id="btnTabRegister" onclick="switchAuthView('register')">Register (+5 Coins)</button>
+                    </div>
+
+                    <!-- ================= VIEW 1: SIGN IN ================= -->
+                    <div id="viewSignIn">
+                        <div class="mb-4">
+                            <h4 class="fw-bold text-white mb-1">Welcome back</h4>
+                            <p class="text-secondary small mb-0">Sign in to access your Lukora Console</p>
+                        </div>
+
+                        <form onsubmit="handleLogin(event)">
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Username or Email</label>
+                                <input type="text" id="loginUsername" class="form-control form-control-auth" required placeholder="Enter your username or email">
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small text-secondary fw-semibold mb-0">Password</label>
+                                    <a href="javascript:void(0)" onclick="switchAuthView('forgot')" class="small text-info text-decoration-none" style="font-size: 12px;">Forgot password?</a>
+                                </div>
+                                <div class="input-group-auth">
+                                    <input type="password" id="loginPassword" class="form-control form-control-auth pe-5" required placeholder="Enter your password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input bg-dark border-secondary" type="checkbox" id="rememberMeCheck" checked>
+                                    <label class="form-check-label small text-secondary" for="rememberMeCheck">Remember me</label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-auth-submit mb-3" id="signInSubmitBtn">
+                                Sign In to Console →
+                            </button>
+
+                            <div class="text-center small text-secondary">
+                                Don't have an account? 
+                                <a href="javascript:void(0)" onclick="switchAuthView('register')" class="text-info fw-bold text-decoration-none">Create Account (+5 Coins)</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- ================= VIEW 2: REGISTER ================= -->
+                    <div id="viewRegister" class="d-none">
+                        <div class="mb-3">
+                            <h4 class="fw-bold text-white mb-1">Create Lukora Account</h4>
+                            <p class="text-secondary small mb-0">Start deploying your bots in under 60 seconds</p>
+                        </div>
+
+                        <!-- 🎁 Welcome Bonus Card -->
+                        <div class="bonus-banner mb-3">
+                            <i class="fa-solid fa-gift fs-4 text-warning"></i>
+                            <div>
+                                <span>NEW DEVELOPER BONUS</span>
+                                <small class="text-light d-block fw-normal" style="font-size: 11px;">Get <b>5 Free Coins</b> instantly credited on signup.</small>
+                            </div>
+                        </div>
+
+                        <form onsubmit="handleSignup(event)">
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Choose Username</label>
+                                <input type="text" id="regUsername" class="form-control form-control-auth" required placeholder="Ex: bot_developer">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Email Address</label>
+                                <input type="email" id="regEmail" class="form-control form-control-auth" required placeholder="name@example.com">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Create Password</label>
+                                <div class="input-group-auth">
+                                    <input type="password" id="regPassword" class="form-control form-control-auth pe-5" required placeholder="••••••••" oninput="checkPasswordStrength(this.value)">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('regPassword', this)">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                                <!-- Password Strength Indicator -->
+                                <div class="strength-meter">
+                                    <div id="strengthBar" class="strength-bar"></div>
+                                </div>
+                                <small id="strengthText" class="text-secondary d-block mt-1" style="font-size: 10px;">Strength: Required 4+ characters</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Confirm Password</label>
+                                <input type="password" id="regConfirmPassword" class="form-control form-control-auth" required placeholder="••••••••">
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input bg-dark border-secondary" type="checkbox" id="termsCheck" required checked>
+                                <label class="form-check-label small text-secondary" for="termsCheck">
+                                    I agree to the Terms of Service & Privacy Policy
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-auth-submit mb-3" id="signUpSubmitBtn">
+                                Claim 5 Coins & Register →
+                            </button>
+
+                            <div class="text-center small text-secondary">
+                                Already have an account? 
+                                <a href="javascript:void(0)" onclick="switchAuthView('login')" class="text-info fw-bold text-decoration-none">Sign In</a>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- ================= VIEW 3: FORGOT PASSWORD ================= -->
+                    <div id="viewForgotPassword" class="d-none">
+                        <div class="mb-3">
+                            <h4 class="fw-bold text-white mb-1">Reset Password</h4>
+                            <p class="text-secondary small mb-0">Enter your registered email address to set a new password</p>
+                        </div>
+
+                        <form onsubmit="handleForgotPassword(event)">
+                            <div class="mb-3">
+                                <label class="form-label small text-secondary fw-semibold">Registered Email</label>
+                                <input type="email" id="forgotEmail" class="form-control form-control-auth" required placeholder="name@example.com">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label small text-secondary fw-semibold">Set New Password</label>
+                                <div class="input-group-auth">
+                                    <input type="password" id="forgotNewPass" class="form-control form-control-auth pe-5" required placeholder="Enter new password">
+                                    <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('forgotNewPass', this)">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-auth-submit mb-3" id="forgotSubmitBtn">
+                                Update Password
+                            </button>
+
+                            <div class="text-center small text-secondary">
+                                <a href="javascript:void(0)" onclick="switchAuthView('login')" class="text-info fw-bold text-decoration-none">← Back to Sign In</a>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Minimal Footer -->
+    <footer class="py-3 border-top border-secondary border-opacity-25 text-center text-secondary small">
+        <p class="mb-0">© 2026 <b>LUKORA</b> • Telegram Bot Hosting Cloud • 24/7 Monitored</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Switch between Login, Register, Forgot Views
+        function switchAuthView(viewName) {
+            document.getElementById('authAlert').classList.add('d-none');
+            document.getElementById('viewSignIn').classList.add('d-none');
+            document.getElementById('viewRegister').classList.add('d-none');
+            document.getElementById('viewForgotPassword').classList.add('d-none');
+
+            document.getElementById('btnTabLogin').classList.remove('active');
+            document.getElementById('btnTabRegister').classList.remove('active');
+
+            if (viewName === 'register') {
+                document.getElementById('viewRegister').classList.remove('d-none');
+                document.getElementById('btnTabRegister').classList.add('active');
+                window.location.hash = 'register';
+            } else if (viewName === 'forgot') {
+                document.getElementById('viewForgotPassword').classList.remove('d-none');
+                window.location.hash = 'forgot';
+            } else {
+                document.getElementById('viewSignIn').classList.remove('d-none');
+                document.getElementById('btnTabLogin').classList.add('active');
+                window.location.hash = 'login';
+            }
+        }
+
+        // Check URL Hash on Load (e.g. /login#register)
+        function checkUrlHash() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash === 'register' || hash === 'signup') {
+                switchAuthView('register');
+            } else if (hash === 'forgot' || hash === 'reset') {
+                switchAuthView('forgot');
+            } else {
+                switchAuthView('login');
+            }
+        }
+
+        // Toggle Password Show/Hide
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-regular fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-regular fa-eye';
+            }
+        }
+
+        // Live Password Strength Meter
+        function checkPasswordStrength(password) {
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            let strength = 0;
+
+            if (password.length >= 4) strength += 25;
+            if (password.length >= 8) strength += 25;
+            if (/[0-9]/.test(password)) strength += 25;
+            if (/[^a-zA-Z0-9]/.test(password)) strength += 25;
+
+            bar.style.width = strength + '%';
+
+            if (strength <= 25) {
+                bar.style.backgroundColor = '#f43f5e';
+                text.innerText = 'Strength: Weak';
+                text.style.color = '#f43f5e';
+            } else if (strength <= 50) {
+                bar.style.backgroundColor = '#fbbf24';
+                text.innerText = 'Strength: Fair';
+                text.style.color = '#fbbf24';
+            } else if (strength <= 75) {
+                bar.style.backgroundColor = '#38bdf8';
+                text.innerText = 'Strength: Strong';
+                text.style.color = '#38bdf8';
+            } else {
+                bar.style.backgroundColor = '#10b981';
+                text.innerText = 'Strength: Very Strong ✓';
+                text.style.color = '#10b981';
+            }
+        }
+
+        function showAlert(msg, type) {
+            const el = document.getElementById('authAlert');
+            el.className = `alert alert-${type} py-2 small mb-3`;
+            el.innerText = msg;
+            el.classList.remove('d-none');
+        }
+
+        // Handle Sign In Submission
+        async function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('signInSubmitBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Signing In...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showAlert('✅ Authentication successful. Redirecting...', 'success');
+                    window.location.href = data.is_admin ? '/admin' : '/';
+                } else {
+                    showAlert(data.msg || 'Invalid username or password.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Sign In to Console →';
+                }
+            } catch(err) {
+                showAlert('Network error. Please try again.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = 'Sign In to Console →';
+            }
+        }
+
+        // Handle Registration Submission
+        async function handleSignup(e) {
+            e.preventDefault();
+            const u = document.getElementById('regUsername').value.trim();
+            const em = document.getElementById('regEmail').value.trim();
+            const p = document.getElementById('regPassword').value;
+            const cp = document.getElementById('regConfirmPassword').value;
+            const btn = document.getElementById('signUpSubmitBtn');
+
+            if (p !== cp) {
+                showAlert('Passwords do not match!', 'danger');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Creating Account...';
+
+            try {
+                const res = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, email: em, password: p })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showAlert(data.msg || 'Account created successfully! Please Sign In.', 'success');
+                    setTimeout(() => {
+                        switchAuthView('login');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Claim 5 Coins & Register →';
+                    }, 1500);
+                } else {
+                    showAlert(data.msg || 'Registration failed.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Claim 5 Coins & Register →';
+                }
+            } catch(err) {
+                showAlert('Network error. Please try again.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = 'Claim 5 Coins & Register →';
+            }
+        }
+
+        // Handle Forgot Password Submission
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const em = document.getElementById('forgotEmail').value.trim();
+            const np = document.getElementById('forgotNewPass').value;
+            const btn = document.getElementById('forgotSubmitBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Updating...';
+
+            try {
+                const res = await fetch('/api/forgot_password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: em, new_password: np })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    showAlert(data.msg || 'Password updated! Please Sign In.', 'success');
+                    setTimeout(() => {
+                        switchAuthView('login');
+                        btn.disabled = false;
+                        btn.innerHTML = 'Update Password';
+                    }, 1500);
+                } else {
+                    showAlert(data.msg || 'Failed to update password.', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Update Password';
+                }
+            } catch(err) {
+                showAlert('Network error. Please try again.', 'danger');
+                btn.disabled = false;
+                btn.innerHTML = 'Update Password';
+            }
+        }
+
+        window.addEventListener('load', checkUrlHash);
+    </script>
+</body>
+</html>
