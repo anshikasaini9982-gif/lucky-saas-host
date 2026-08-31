@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Checkout — LUKORA</title>
+    <!-- Fonts & Bootstrap -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-base: #060913;
+            --bg-surface: #0c1222;
+            --bg-surface-elevated: #111a30;
+            --border: #1e293b;
+            --primary: #00f2fe;
+            --primary-purple: #8b5cf6;
+            --accent-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #8b5cf6 100%);
+            --emerald: #10b981;
+            --gold: #fbbf24;
+            --rose: #f43f5e;
+        }
+
+        body { 
+            background: var(--bg-base); 
+            color: #f1f5f9; 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(0, 242, 254, 0.06) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+            background-attachment: fixed;
+            padding-bottom: 60px;
+        }
+
+        .code-font { font-family: 'JetBrains Mono', monospace; }
+
+        .brand-title {
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .checkout-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+
+        .qr-card-container {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 18px;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.2);
+        }
+
+        .info-pill-box {
+            background: #090e1a;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+        }
+
+        .form-input-custom {
+            background: #111a30;
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 12px;
+            padding: 13px 16px;
+            font-size: 14px;
+        }
+        .form-input-custom:focus {
+            background: #162240;
+            border-color: var(--primary);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+        }
+
+        .upload-dropzone {
+            border: 2px dashed rgba(0, 242, 254, 0.3);
+            background: rgba(0, 242, 254, 0.02);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .upload-dropzone:hover {
+            border-color: var(--primary);
+            background: rgba(0, 242, 254, 0.06);
+        }
+
+        .btn-submit-verify {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #fff !important;
+            font-weight: 800;
+            border-radius: 50px;
+            padding: 14px 28px;
+            border: none;
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.35);
+            transition: all 0.25s ease;
+            width: 100%;
+        }
+        .btn-submit-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 35px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-upi-app {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: #fff !important;
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 10px 20px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .step-badge {
+            background: rgba(0, 242, 254, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            border-radius: 50px;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .instruction-item {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Bar -->
+    <header class="py-3 mb-4 border-bottom border-secondary border-opacity-25" style="background: rgba(12, 18, 34, 0.85); backdrop-filter: blur(16px);">
+        <div class="container d-flex justify-content-between align-items-center" style="max-width: 1080px;">
+            <a href="/store" class="d-flex align-items-center gap-2 text-decoration-none">
+                <i class="fa-solid fa-arrow-left text-secondary fs-5 me-1"></i>
+                <div>
+                    <h5 class="brand-title mb-0" id="headerSiteName">LUKORA</h5>
+                    <small class="text-secondary" style="font-size: 10px;">Telegram Bot Hosting</small>
+                </div>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success bg-opacity-25 text-success border border-success px-3 py-2 rounded-pill small code-font">
+                    <i class="fa-solid fa-lock me-1"></i> 256-Bit SSL Checkout
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Payment Container -->
+    <div class="container" style="max-width: 1080px;">
+
+        <!-- Top Title & Subtitle -->
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-white mb-1 display-6">Complete Your Payment</h2>
+            <p class="text-secondary small">Pay securely using any UPI app and submit your 12-digit transaction reference for verification.</p>
+        </div>
+
+        <!-- 2-COLUMN DESKTOP / 1-COLUMN MOBILE LAYOUT -->
+        <div class="row g-4" id="checkoutMainRow">
+            
+            <!-- LEFT COLUMN: STEP 1 — PAY VIA UPI -->
+            <div class="col-lg-6">
+                <div class="checkout-card h-100 text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="step-badge code-font">STEP 01</span>
+                        <span class="small text-secondary fw-semibold">Instant QR Generation</span>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-2">Scan & Pay via UPI</h5>
+                    <p class="text-secondary small mb-3">Use PhonePe, Google Pay, Paytm, or any banking UPI app.</p>
+
+                    <!-- High-Res White QR Code Container -->
+                    <div class="qr-card-container mb-3">
+                        <img id="paymentQrImg" src="" alt="Payment QR Code" style="width: 220px; height: 220px; display: block;">
+                    </div>
+
+                    <!-- Amount Block -->
+                    <div class="mb-3">
+                        <small class="text-secondary code-font d-block mb-1">TOTAL PAYABLE AMOUNT</small>
+                        <h2 class="fw-bold text-success display-6 mb-0" id="displayPayableAmount">₹0</h2>
+                        <small class="text-muted" style="font-size: 11px;">(Please pay the exact amount shown above)</small>
+                    </div>
+
+                    <!-- Merchant & UPI ID Box -->
+                    <div class="info-pill-box text-start mb-3 code-font small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-secondary">Merchant:</span>
+                            <b class="text-warning" id="merchantNameText">LUCKY BHAI HOSTING</b>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-secondary">UPI ID:</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <b class="text-info" id="upiIdText">Loading...</b>
+                                <button type="button" onclick="copyUpiId()" class="btn btn-outline-secondary btn-sm py-0 px-2 rounded-pill" id="copyUpiBtn" style="font-size: 11px;">
+                                    <i class="fa-regular fa-copy me-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open UPI App Intent Button (Mobile Friendly) -->
+                    <div class="mb-3">
+                        <a id="upiIntentBtn" href="#" class="btn-upi-app w-100">
+                            <i class="fa-solid fa-mobile-screen-button me-1"></i> Open in UPI App (GPay / PhonePe)
+                        </a>
+                    </div>
+
+                    <!-- Quick Instructions Accordion/List -->
+                    <div class="info-pill-box text-start" style="background: rgba(6, 9, 17, 0.4);">
+                        <small class="text-white fw-bold d-block mb-2"><i class="fa-solid fa-circle-info text-info me-1"></i> How to Pay:</small>
+                        <div class="instruction-item"><span class="text-info fw-bold">1.</span> Scan QR code or copy the UPI ID.</div>
+                        <div class="instruction-item"><span class="text-info fw-bold">2.</span> Pay the exact amount shown on this page.</div>
+                        <div class="instruction-item"><span class="text-info fw-bold">3.</span> Copy the 12-digit UTR/Reference number from your app.</div>
+                        <div class="instruction-item"><span class="text-info fw-bold">4.</span> Enter UTR on Step 2 and submit for verification.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: ORDER SUMMARY + STEP 2 VERIFY -->
+            <div class="col-lg-6">
+                
+                <!-- Order Summary Card -->
+                <div class="checkout-card mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-white mb-0"><i class="fa-solid fa-receipt text-warning me-2"></i>Order Summary</h6>
+                        <span class="badge bg-dark border border-secondary code-font text-secondary" id="displayOrderId">#LKR-ORDER</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary small">Selected Package:</span>
+                        <b class="text-white" id="summaryPlanName">Loading...</b>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25">
+                        <span class="text-secondary small">Base Price:</span>
+                        <span class="text-light" id="summaryBasePrice">₹0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary border-opacity-25 d-none" id="summaryDiscountRow">
+                        <span class="text-success small">Promo Discount:</span>
+                        <b class="text-success" id="summaryDiscountAmount">-₹0</b>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center pt-3">
+                        <span class="text-white fw-bold">Final Total:</span>
+                        <h4 class="text-success fw-bold mb-0" id="summaryFinalPrice">₹0</h4>
+                    </div>
+                </div>
+
+                <!-- Step 2: Verification Form Card -->
+                <div class="checkout-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="step-badge code-font" style="color: var(--gold); border-color: rgba(251, 191, 36, 0.4);">STEP 02</span>
+                        <span class="small text-secondary fw-semibold">Verification Details</span>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-1">Verify Your Payment</h5>
+                    <p class="text-secondary small mb-3">Enter the transaction reference exactly as displayed in your payment app.</p>
+
+                    <!-- Promo Code Applicator -->
+                    <div class="input-group mb-3">
+                        <input type="text" id="couponCodeInput" class="form-control form-input-custom text-uppercase code-font" placeholder="Have a Promo Code? (Ex: LUCKY20)">
+                        <button class="btn btn-outline-info fw-bold px-3" type="button" onclick="applyPromoCode()">Apply</button>
+                    </div>
+                    <div id="couponStatusMessage" class="small mb-3 text-start d-none"></div>
+
+                    <form onsubmit="handleVerificationSubmit(event)">
+                        <!-- 12-Digit UTR Input -->
+                        <div class="mb-3">
+                            <label class="form-label small text-secondary fw-semibold">12-Digit UTR / Transaction Reference Number <span class="text-danger">*</span></label>
+                            <input type="text" id="utrInputField" class="form-control form-input-custom code-font" required placeholder="Ex: 423987123456" maxlength="22" oninput="validateUtr(this)">
+                            <small class="text-secondary" style="font-size: 11px;">Do not enter space or symbols. Exact UTR from payment receipt.</small>
+                        </div>
+
+                        <!-- Payment Screenshot Upload Box with Preview -->
+                        <div class="mb-4">
+                            <label class="form-label small text-secondary fw-semibold">Payment Screenshot (Optional but recommended)</label>
+                            <div class="upload-dropzone" onclick="document.getElementById('screenshotFileInput').click()">
+                                <i class="fa-solid fa-cloud-arrow-up fs-3 text-info mb-2"></i>
+                                <div class="text-white fw-bold small" id="uploadStatusText">Click to upload payment receipt</div>
+                                <small class="text-secondary" style="font-size: 11px;">PNG, JPG, JPEG (Max 5 MB)</small>
+                                <input type="file" id="screenshotFileInput" class="d-none" accept="image/*" onchange="previewScreenshot(this)">
+                            </div>
+                            
+                            <!-- Image Preview Thumbnail Container -->
+                            <div id="screenshotPreviewContainer" class="d-none mt-2 p-2 rounded-3 bg-dark border border-secondary d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <img id="previewThumbnailImg" src="" class="rounded" style="width: 44px; height: 44px; object-fit: cover;">
+                                    <div style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <small class="text-white fw-semibold d-block" id="previewFileName">receipt.jpg</small>
+                                        <small class="text-secondary" id="previewFileSize">0 KB</small>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="removeScreenshot()" class="btn btn-outline-danger btn-sm rounded-circle py-0 px-2" title="Remove">✕</button>
+                            </div>
+                        </div>
+
+                        <!-- Warning Notice -->
+                        <div class="p-3 rounded-3 mb-4 text-start border border-warning border-opacity-25" style="background: rgba(245, 158, 11, 0.05);">
+                            <small class="text-warning fw-semibold d-block mb-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> Important Verification Notice:</small>
+                            <small class="text-secondary" style="font-size: 11px; line-height: 1.5;">
+                                Please ensure the UTR number is correct. Duplicate or fraudulent submissions will lead to automated account termination.
+                            </small>
+                        </div>
+
+                        <!-- Primary Submit CTA -->
+                        <button type="submit" class="btn-submit-verify" id="submitBtn">
+                            <i class="fa-solid fa-shield-halved me-2"></i> Submit for Verification
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- POST-SUBMISSION STATUS SCREEN (Replaces checkout once submitted) -->
+        <div id="submissionSuccessScreen" class="d-none text-center py-5">
+            <div class="checkout-card mx-auto p-5" style="max-width: 620px;">
+                <div class="mb-3">
+                    <span class="badge bg-warning bg-opacity-25 text-warning border border-warning p-3 rounded-circle fs-3 mb-2">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </span>
+                </div>
+                <h3 class="fw-bold text-white mb-2">Verification Request Submitted</h3>
+                <p class="text-secondary small mb-4">Your payment details have been sent for manual administrator verification. Coins or VIP access will be credited as soon as verified.</p>
+
+                <div class="info-pill-box text-start code-font small mb-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Request ID:</span>
+                        <b class="text-info" id="successRequestId">#LKR-000000</b>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Amount Paid:</span>
+                        <b class="text-success" id="successAmount">₹0</b>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-secondary">Package:</span>
+                        <b class="text-white" id="successPackage">100 Coins Pack</b>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-secondary">Status:</span>
+                        <span class="badge bg-warning text-dark fw-bold">🟡 Pending Review</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="/store" class="btn btn-outline-info rounded-pill px-4">View My Transactions</a>
+                    <a href="/" class="btn btn-primary rounded-pill px-4" style="background: var(--accent-gradient); border: none; color:#04101e; font-weight:700;">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trust & Help Footer Area -->
+        <div class="text-center text-secondary small mt-5 pt-4 border-top border-secondary border-opacity-25">
+            <p class="mb-2">Need assistance with your payment? Contact our 24/7 dedicated support team on Telegram: <a href="https://t.me/BYLUCKSUPPORTBOT" target="_blank" class="text-info text-decoration-none fw-bold">@BYLUCKSUPPORTBOT</a></p>
+            <p class="text-muted">© 2026 <b>LUKORA</b> • Secure Merchant Checkout System</p>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const PLANS_DATA = {
+            'coins_15': { name: '15 Coins Pack', price: 80, coins: 15 },
+            'coins_20': { name: '20 Coins Pack', price: 150, coins: 20 },
+            'coins_100': { name: '100 Coins Pack (Most Popular)', price: 600, coins: 100 },
+            'coins_200': { name: '200 Coins Pack', price: 1100, coins: 200 },
+            'vip_monthly': { name: 'LUKORA VIP — 30 Days', price: 499, coins: 0 }
+        };
+
+        let currentPlanKey = 'coins_100';
+        let currentBaseAmount = 600;
+        let currentFinalAmount = 600;
+        let globalUpiId = 'BHARATPE2U05011Z5J98004@unitype';
+        let globalMerchant = 'LUCKY BHAI HOSTING';
+
+        // Load Plan from URL Query Params (e.g. /payment?plan=coins_20)
+        function initCheckout() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const planParam = urlParams.get('plan');
+            if (planParam && PLANS_DATA[planParam]) {
+                currentPlanKey = planParam;
+            }
+
+            const pInfo = PLANS_DATA[currentPlanKey];
+            currentBaseAmount = pInfo.price;
+            currentFinalAmount = pInfo.price;
+
+            document.getElementById('summaryPlanName').innerText = pInfo.name;
+            document.getElementById('summaryBasePrice').innerText = '₹' + pInfo.price;
+            document.getElementById('summaryFinalPrice').innerText = '₹' + pInfo.price;
+            document.getElementById('displayPayableAmount').innerText = '₹' + pInfo.price;
+
+            // Generate Random Order ID
+            const randomOrderId = '#LKR-' + Math.floor(100000 + Math.random() * 900000);
+            document.getElementById('displayOrderId').innerText = randomOrderId;
+
+            // Fetch live UPI & Merchant Settings from Server
+            fetchSettings();
+        }
+
+        async function fetchSettings() {
+            try {
+                const res = await fetch('/api/user_data');
+                const data = await res.json();
+                if (data.site_name) document.getElementById('headerSiteName').innerText = data.site_name;
+                if (data.upi_id) globalUpiId = data.upi_id;
+                if (data.merchant_name) globalMerchant = data.merchant_name;
+
+                document.getElementById('upiIdText').innerText = globalUpiId;
+                document.getElementById('merchantNameText').innerText = globalMerchant;
+
+                updateQrAndIntent();
+            } catch(e){
+                updateQrAndIntent();
+            }
+        }
+
+        function updateQrAndIntent() {
+            const upiRawString = `upi://pay?pa=${globalUpiId}&pn=${encodeURIComponent(globalMerchant)}&am=${currentFinalAmount}&cu=INR`;
+            
+            // High-Res Clean QR
+            document.getElementById('paymentQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiRawString)}`;
+            
+            // Deep Link
+            document.getElementById('upiIntentBtn').href = upiRawString;
+        }
+
+        function copyUpiId() {
+            navigator.clipboard.writeText(globalUpiId);
+            const btn = document.getElementById('copyUpiBtn');
+            btn.innerHTML = '<i class="fa-solid fa-check me-1"></i> Copied ✓';
+            btn.className = 'btn btn-success btn-sm py-0 px-2 rounded-pill';
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fa-regular fa-copy me-1"></i> Copy';
+                btn.className = 'btn btn-outline-secondary btn-sm py-0 px-2 rounded-pill';
+            }, 2000);
+        }
+
+        async function applyPromoCode() {
+            const code = document.getElementById('couponCodeInput').value.trim();
+            const msgEl = document.getElementById('couponStatusMessage');
+            if (!code) return;
+
+            const res = await fetch('/api/check_coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code })
+            });
+            const data = await res.json();
+
+            if (data.valid) {
+                const discountVal = (currentBaseAmount * data.discount) / 100;
+                currentFinalAmount = Math.round(currentBaseAmount - discountVal);
+
+                msgEl.className = 'small mb-3 text-start text-success fw-bold';
+                msgEl.innerText = `${data.msg} (You saved ₹${discountVal})`;
+
+                document.getElementById('summaryDiscountRow').classList.remove('d-none');
+                document.getElementById('summaryDiscountAmount').innerText = '-₹' + discountVal;
+                document.getElementById('summaryFinalPrice').innerText = '₹' + currentFinalAmount;
+                document.getElementById('displayPayableAmount').innerText = '₹' + currentFinalAmount;
+
+                updateQrAndIntent();
+            } else {
+                msgEl.className = 'small mb-3 text-start text-danger';
+                msgEl.innerText = data.msg;
+            }
+        }
+
+        function previewScreenshot(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5 MB limit!');
+                    input.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewThumbnailImg').src = e.target.result;
+                    document.getElementById('previewFileName').innerText = file.name;
+                    document.getElementById('previewFileSize').innerText = (file.size / 1024).toFixed(1) + ' KB';
+                    document.getElementById('screenshotPreviewContainer').classList.remove('d-none');
+                    document.getElementById('uploadStatusText').innerText = 'Screenshot attached ✅';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeScreenshot() {
+            document.getElementById('screenshotFileInput').value = '';
+            document.getElementById('screenshotPreviewContainer').classList.add('d-none');
+            document.getElementById('uploadStatusText').innerText = 'Click to upload payment receipt';
+        }
+
+        function validateUtr(input) {
+            input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
+        }
+
+        async function handleVerificationSubmit(e) {
+            e.preventDefault();
+            const utr = document.getElementById('utrInputField').value.trim();
+            const file = document.getElementById('screenshotFileInput').files[0];
+
+            if (utr.length < 6) {
+                alert('Please enter a valid 12-digit UTR/transaction reference number!');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Submitting for Verification...';
+
+            const fd = new FormData();
+            fd.append('plan', currentPlanKey);
+            fd.append('utr', utr);
+            fd.append('final_amount', currentFinalAmount);
+            if (file) fd.append('screenshot', file);
+
+            try {
+                const res = await fetch('/api/buy_plan', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Show Success Screen
+                    document.getElementById('checkoutMainRow').classList.add('d-none');
+                    document.getElementById('submissionSuccessScreen').classList.remove('d-none');
+                    document.getElementById('successRequestId').innerText = '#' + (data.request_id || 'LKR-PENDING');
+                    document.getElementById('successAmount').innerText = '₹' + currentFinalAmount;
+                    document.getElementById('successPackage').innerText = PLANS_DATA[currentPlanKey].name;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    alert(data.msg || 'Submission failed. Please try again.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-shield-halved me-2"></i> Submit for Verification';
+                }
+            } catch(err) {
+                alert('Network error. Please check your connection.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-shield-halved me-2"></i> Submit for Verification';
+            }
+        }
+
+        initCheckout();
+    </script>
+</body>
+</html>
